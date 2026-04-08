@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.ally.blogapp.controller.PostEditorController"
+      spacing="15" style="-fx-padding: 25; -fx-background-color: white;">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="15">
+        <Button text="Back" onAction="#handleBack"
+                style="-fx-background-color: white; -fx-text-fill: black; -fx-padding: 8 16; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand;"/>
+        <Label fx:id="editorTitle" text="Create New Post"
+               style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background: white; -fx-background-color: white; -fx-border-color: transparent;">
+        <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 25; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;">
+
+            <!-- Title -->
+            <Label text="Title" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+            <TextField fx:id="titleField" promptText="Enter post title..."
+                       style="-fx-padding: 10; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-font-size: 14px;"/>
+
+            <!-- Content -->
+            <Label text="Content" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+            <TextArea fx:id="contentArea" promptText="Write your post content here..."
+                      prefRowCount="12" wrapText="true"
+                      style="-fx-padding: 10; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-font-size: 13px;"/>
+
+            <!-- Tags -->
+            <Label text="Tags (comma separated)" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+            <TextField fx:id="tagsField" promptText="java, spring, tutorial"
+                       style="-fx-padding: 10; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3;"/>
+
+            <!-- Status -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Status" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+                <ComboBox fx:id="statusCombo"/>
+            </HBox>
+
+            <Label fx:id="errorLabel" style="-fx-font-size: 12px; -fx-text-fill: black;"/>
+
+            <!-- Buttons -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Button fx:id="saveBtn" text="Save Draft" onAction="#handleSave"
+                        style="-fx-background-color: white; -fx-text-fill: black; -fx-padding: 10 25; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-font-size: 13px; -fx-cursor: hand;"/>
+                <Button fx:id="publishBtn" text="Publish" onAction="#handlePublish"
+                        style="-fx-background-color: black; -fx-text-fill: white; -fx-padding: 10 25; -fx-background-radius: 3; -fx-font-size: 13px; -fx-cursor: hand;"/>
+            </HBox>
+        </VBox>
+    </ScrollPane>
+</VBox>
