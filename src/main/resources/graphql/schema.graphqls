@@ -1,0 +1,118 @@
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    role: String!
+    bio: String
+    profileImage: String
+    createdAt: String
+    updatedAt: String
+}
+
+type Post {
+    id: ID!
+    author: User!
+    title: String!
+    content: String!
+    status: String!
+    tags: [Tag!]!
+    comments: [Comment!]!
+    reviews: [Review!]!
+    createdAt: String
+    updatedAt: String
+    publishedAt: String
+}
+
+type Comment {
+    id: ID!
+    post: Post!
+    user: User!
+    content: String!
+    createdAt: String
+    updatedAt: String
+}
+
+type Tag {
+    id: ID!
+    name: String!
+    createdAt: String
+}
+
+type Review {
+    id: ID!
+    post: Post!
+    user: User!
+    rating: Int!
+    content: String
+    createdAt: String
+    updatedAt: String
+}
+
+type PostStats {
+    postId: ID!
+    title: String!
+    status: String!
+    commentCount: Int!
+    reviewCount: Int!
+    avgRating: Float!
+}
+
+type PageInfo {
+    totalElements: Int!
+    totalPages: Int!
+    currentPage: Int!
+    pageSize: Int!
+}
+
+type PostPage {
+    content: [Post!]!
+    pageInfo: PageInfo!
+}
+
+type Query {
+    user(id: ID!): User
+    users: [User!]!
+
+    post(id: ID!): Post
+    posts(page: Int, size: Int, sort: String, direction: String): PostPage!
+    publishedPosts(page: Int, size: Int): PostPage!
+    postsByTag(tagId: ID!, page: Int, size: Int): PostPage!
+    searchPosts(keyword: String!, page: Int, size: Int): PostPage!
+    postsByAuthor(authorId: ID!): [Post!]!
+    postStats(authorId: ID!): [PostStats!]!
+
+    comment(id: ID!): Comment
+    commentsByPost(postId: ID!): [Comment!]!
+
+    tag(id: ID!): Tag
+    tags: [Tag!]!
+
+    review(id: ID!): Review
+    reviewsByPost(postId: ID!): [Review!]!
+    averageRating(postId: ID!): Float!
+}
+
+type Mutation {
+    createUser(username: String!, email: String!, password: String!, role: String!): User!
+    updateUser(id: ID!, bio: String, profileImage: String): User!
+    deleteUser(id: ID!): Boolean!
+
+    createPost(authorId: ID!, title: String!, content: String!, tags: [String]): Post!
+    updatePost(id: ID!, title: String, content: String, tags: [String]): Post!
+    publishPost(id: ID!): Post!
+    archivePost(id: ID!): Post!
+    addTagToPost(postId: ID!, tagId: ID!): Post!
+    removeTagFromPost(postId: ID!, tagId: ID!): Post!
+    deletePost(id: ID!): Boolean!
+
+    createComment(postId: ID!, userId: ID!, content: String!): Comment!
+    updateComment(id: ID!, content: String!): Comment!
+    deleteComment(id: ID!): Boolean!
+
+    createTag(name: String!): Tag!
+    deleteTag(id: ID!): Boolean!
+
+    createReview(postId: ID!, userId: ID!, rating: Int!, content: String): Review!
+    updateReview(id: ID!, rating: Int!, content: String): Review!
+    deleteReview(id: ID!): Boolean!
+}

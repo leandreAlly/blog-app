@@ -1,51 +1,71 @@
 package com.ally.blogapp.service;
 
-import com.ally.blogapp.dao.UserDao;
-import com.ally.blogapp.dao.impl.UserDaoImpl;
+import com.ally.blogapp.exception.DuplicateResourceException;
+import com.ally.blogapp.exception.InvalidOperationException;
+import com.ally.blogapp.exception.ResourceNotFoundException;
+import com.ally.blogapp.model.Role;
 import com.ally.blogapp.model.User;
+import com.ally.blogapp.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
+@Service
 public class UserService {
 
-    private final UserDao userDao;
+    private final UserRepository userRepository;
 
-    public UserService() {
-        this.userDao = new UserDaoImpl();
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    public User register(User user) {
-        if (userDao.findByUsername(user.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists");
+    @Transactional
+    public User register(String username, String email, String password, String role) {
+        if (userRepository.existsByUsername(username)) {
+            throw new DuplicateResourceException("Username already taken: " + username);
         }
-        if (userDao.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already exists");
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("Email already registered: " + email);
         }
-        return userDao.save(user);
+        User user = new User(username, email, password, Role.valueOf(role));
+        return userRepository.save(user);
     }
 
-    public Optional<User> findById(Long id) {
-        return userDao.findById(id);
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
-    public Optional<User> findByUsername(String username) {
-        return userDao.findByUsername(username);
+    public User login(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new InvalidOperationException("Invalid username or password"));
+        if (!user.getPassword().equals(password)) {
+            throw new InvalidOperationException("Invalid username or password");
+        }
+        return user;
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
     }
 
     public List<User> findAll() {
-        return userDao.findAll();
+        return userRepository.findAll();
     }
 
-    public User update(User user) {
-        userDao.findById(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return userDao.update(user);
+    @Transactional
+    public User update(Long id, String bio, String profileImage) {
+        User user = findById(id);
+        if (bio != null) user.setBio(bio);
+        if (profileImage != null) user.setProfileImage(profileImage);
+        return userRepository.save(user);
     }
 
+    @Transactional
     public void delete(Long id) {
-        userDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        userDao.delete(id);
+        findById(id);
+        userRepository.deleteById(id);
     }
 }

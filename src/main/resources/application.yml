@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: blog-app
+  profiles:
+    active: dev
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  graphql:
+    graphiql:
+      enabled: false
+    schema:
+      printer:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.ally.blogapp: INFO

@@ -1,58 +1,69 @@
 package com.ally.blogapp.service;
 
-import com.ally.blogapp.dao.ReviewDao;
-import com.ally.blogapp.dao.impl.ReviewDaoImpl;
+import com.ally.blogapp.exception.DuplicateResourceException;
+import com.ally.blogapp.exception.ResourceNotFoundException;
+import com.ally.blogapp.model.Post;
 import com.ally.blogapp.model.Review;
+import com.ally.blogapp.model.User;
+import com.ally.blogapp.repository.ReviewRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
+@Service
 public class ReviewService {
 
-    private final ReviewDao reviewDao;
+    private final ReviewRepository reviewRepository;
+    private final UserService userService;
+    private final PostService postService;
 
-    public ReviewService() {
-        this.reviewDao = new ReviewDaoImpl();
+    public ReviewService(ReviewRepository reviewRepository,
+                         UserService userService,
+                         PostService postService) {
+        this.reviewRepository = reviewRepository;
+        this.userService = userService;
+        this.postService = postService;
     }
 
-    public Review create(Review review) {
-        if (review.getRating() < 1 || review.getRating() > 5) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5");
+    @Transactional
+    public Review create(Long postId, Long userId, int rating, String content) {
+        if (reviewRepository.existsByPostIdAndUserId(postId, userId)) {
+            throw new DuplicateResourceException("User has already reviewed this post");
         }
-        if (reviewDao.findByPostIdAndUserId(review.getPostId(), review.getUserId()).isPresent()) {
-            throw new IllegalArgumentException("User has already reviewed this post");
-        }
-        return reviewDao.save(review);
+        Post post = postService.findById(postId);
+        User user = userService.findById(userId);
+        return reviewRepository.save(new Review(post, user, rating, content));
     }
 
-    public Optional<Review> findById(Long id) {
-        return reviewDao.findById(id);
+    public Review findById(Long id) {
+        return reviewRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
     }
 
     public List<Review> findByPostId(Long postId) {
-        return reviewDao.findByPostId(postId);
+        return reviewRepository.findByPostId(postId);
     }
 
     public List<Review> findByUserId(Long userId) {
-        return reviewDao.findByUserId(userId);
+        return reviewRepository.findByUserId(userId);
     }
 
     public double getAverageRating(Long postId) {
-        return reviewDao.getAverageRatingByPostId(postId);
+        return reviewRepository.getAverageRatingByPostId(postId);
     }
 
-    public Review update(Review review) {
-        if (review.getRating() < 1 || review.getRating() > 5) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5");
-        }
-        reviewDao.findById(review.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
-        return reviewDao.update(review);
+    @Transactional
+    public Review update(Long id, int rating, String content) {
+        Review review = findById(id);
+        review.setRating(rating);
+        if (content != null) review.setContent(content);
+        return reviewRepository.save(review);
     }
 
+    @Transactional
     public void delete(Long id) {
-        reviewDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
-        reviewDao.delete(id);
+        findById(id);
+        reviewRepository.deleteById(id);
     }
 }

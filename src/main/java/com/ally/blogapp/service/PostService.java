@@ -1,80 +1,120 @@
 package com.ally.blogapp.service;
 
-import com.ally.blogapp.dao.PostDao;
-import com.ally.blogapp.dao.impl.PostDaoImpl;
-import com.ally.blogapp.model.Post;
-import com.ally.blogapp.model.PostStats;
-import com.ally.blogapp.model.PostStatus;
+import com.ally.blogapp.exception.ResourceNotFoundException;
+import com.ally.blogapp.model.*;
+import com.ally.blogapp.repository.PostRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Service
 public class PostService {
 
-    private final PostDao postDao;
+    private final PostRepository postRepository;
+    private final UserService userService;
+    private final TagService tagService;
 
-    public PostService() {
-        this.postDao = new PostDaoImpl();
+    public PostService(PostRepository postRepository, UserService userService, TagService tagService) {
+        this.postRepository = postRepository;
+        this.userService = userService;
+        this.tagService = tagService;
     }
 
-    public Post create(Post post) {
-        post.setStatus(PostStatus.DRAFT);
-        return postDao.save(post);
+    @Transactional
+    public Post create(Long authorId, String title, String content, List<String> tagNames) {
+        User author = userService.findById(authorId);
+        Post post = new Post(author, title, content);
+        if (tagNames != null) {
+            Set<Tag> tags = tagNames.stream()
+                    .map(tagService::findOrCreate)
+                    .collect(Collectors.toSet());
+            post.setTags(tags);
+        }
+        return postRepository.save(post);
     }
 
-    public Optional<Post> findById(Long id) {
-        return postDao.findById(id);
+    public Post findById(Long id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
     }
 
     public List<Post> findByAuthorId(Long authorId) {
-        return postDao.findByAuthorId(authorId);
+        return postRepository.findByAuthorIdOrderByCreatedAtDesc(authorId);
     }
 
-    public List<Post> findPublished() {
-        return postDao.findByStatus(PostStatus.PUBLISHED);
+    public Page<Post> findPublished(Pageable pageable) {
+        return postRepository.findByStatus(PostStatus.PUBLISHED, pageable);
     }
 
-    public List<Post> findAll() {
-        return postDao.findAll();
+    public Page<Post> findAll(Pageable pageable) {
+        return postRepository.findAll(pageable);
     }
 
-    public List<Post> search(String keyword) {
-        return postDao.searchByKeyword(keyword);
+    public Page<Post> search(String keyword, Pageable pageable) {
+        return postRepository.searchByKeyword(keyword, pageable);
     }
 
-    public List<Post> findPublishedByTag(Long tagId) {
-        return postDao.findByTagId(tagId);
+    public Page<Post> findPublishedByTag(Long tagId, Pageable pageable) {
+        return postRepository.findPublishedByTagId(tagId, pageable);
     }
 
     public List<PostStats> getStatsByAuthorId(Long authorId) {
-        return postDao.getStatsByAuthorId(authorId);
+        return postRepository.getStatsByAuthorId(authorId);
     }
 
+    @Transactional
     public Post publish(Long postId) {
-        Post post = postDao.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        Post post = findById(postId);
         post.setStatus(PostStatus.PUBLISHED);
         post.setPublishedAt(LocalDateTime.now());
-        return postDao.update(post);
+        return postRepository.save(post);
     }
 
+    @Transactional
     public Post archive(Long postId) {
-        Post post = postDao.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        Post post = findById(postId);
         post.setStatus(PostStatus.ARCHIVED);
-        return postDao.update(post);
+        return postRepository.save(post);
     }
 
-    public Post update(Post post) {
-        postDao.findById(post.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        return postDao.update(post);
+    @Transactional
+    public Post update(Long id, String title, String content, List<String> tagNames) {
+        Post post = findById(id);
+        if (title != null) post.setTitle(title);
+        if (content != null) post.setContent(content);
+        if (tagNames != null) {
+            Set<Tag> tags = tagNames.stream()
+                    .map(tagService::findOrCreate)
+                    .collect(Collectors.toSet());
+            post.setTags(tags);
+        }
+        return postRepository.save(post);
     }
 
+    @Transactional
     public void delete(Long id) {
-        postDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        postDao.delete(id);
+        findById(id);
+        postRepository.deleteById(id);
+    }
+
+    @Transactional
+    public Post addTag(Long postId, Long tagId) {
+        Post post = findById(postId);
+        Tag tag = tagService.findById(tagId);
+        post.getTags().add(tag);
+        return postRepository.save(post);
+    }
+
+    @Transactional
+    public Post removeTag(Long postId, Long tagId) {
+        Post post = findById(postId);
+        post.getTags().removeIf(t -> t.getId().equals(tagId));
+        return postRepository.save(post);
     }
 }

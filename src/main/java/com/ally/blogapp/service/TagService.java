@@ -1,58 +1,54 @@
 package com.ally.blogapp.service;
 
-import com.ally.blogapp.dao.TagDao;
-import com.ally.blogapp.dao.impl.TagDaoImpl;
+import com.ally.blogapp.exception.DuplicateResourceException;
+import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.Tag;
+import com.ally.blogapp.repository.TagRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
+@Service
 public class TagService {
 
-    private final TagDao tagDao;
+    private final TagRepository tagRepository;
 
-    public TagService() {
-        this.tagDao = new TagDaoImpl();
+    public TagService(TagRepository tagRepository) {
+        this.tagRepository = tagRepository;
     }
 
-    public Tag create(Tag tag) {
-        if (tagDao.findByName(tag.getName()).isPresent()) {
-            throw new IllegalArgumentException("Tag already exists");
+    @Transactional
+    public Tag create(String name) {
+        if (tagRepository.existsByName(name)) {
+            throw new DuplicateResourceException("Tag already exists: " + name);
         }
-        return tagDao.save(tag);
+        return tagRepository.save(new Tag(name));
     }
 
+    @Transactional
     public Tag findOrCreate(String name) {
-        return tagDao.findByName(name).orElseGet(() -> tagDao.save(new Tag(name)));
+        return tagRepository.findByName(name)
+                .orElseGet(() -> tagRepository.save(new Tag(name)));
     }
 
-    public Optional<Tag> findById(Long id) {
-        return tagDao.findById(id);
+    public Tag findById(Long id) {
+        return tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + id));
     }
 
-    public Optional<Tag> findByName(String name) {
-        return tagDao.findByName(name);
+    public Tag findByName(String name) {
+        return tagRepository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + name));
     }
 
     public List<Tag> findAll() {
-        return tagDao.findAll();
+        return tagRepository.findAll();
     }
 
-    public List<Tag> findByPostId(Long postId) {
-        return tagDao.findByPostId(postId);
-    }
-
-    public void addTagToPost(Long postId, Long tagId) {
-        tagDao.addTagToPost(postId, tagId);
-    }
-
-    public void removeTagFromPost(Long postId, Long tagId) {
-        tagDao.removeTagFromPost(postId, tagId);
-    }
-
+    @Transactional
     public void delete(Long id) {
-        tagDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
-        tagDao.delete(id);
+        findById(id);
+        tagRepository.deleteById(id);
     }
 }

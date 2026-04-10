@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/blogapp_test
+    username: ally
+    password: ''
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    clean-on-validation-error: true
+  graphql:
+    graphiql:
+      enabled: false
+
+logging:
+  level:
+    com.ally.blogapp: WARN
