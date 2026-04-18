@@ -30,6 +30,10 @@
                         style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 13px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-radius: 4; -fx-cursor: hand;"/>
                 <Button fx:id="createPostBtn" text="Create Post" onAction="#showCreatePost" prefWidth="200"
                         style="-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 13px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-radius: 4; -fx-cursor: hand;"/>
+                <Button text="Analytics" onAction="#showAnalytics" prefWidth="200"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 13px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-radius: 4; -fx-cursor: hand;"/>
+                <Button text="Performance" onAction="#showPerformance" prefWidth="200"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 13px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-radius: 4; -fx-cursor: hand;"/>
             </VBox>
 
             <!-- Spacer -->

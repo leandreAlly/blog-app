@@ -33,7 +33,6 @@ public class PostDetailController {
     // Reviews
     @FXML private VBox reviewsContainer;
     @FXML private ComboBox<Integer> ratingCombo;
-    @FXML private TextArea reviewInput;
     @FXML private Label reviewError;
     @FXML private VBox reviewFormBox;
 
@@ -202,13 +201,6 @@ public class PostDetailController {
 
         card.getChildren().add(header);
 
-        if (review.getContent() != null && !review.getContent().isEmpty()) {
-            Label body = new Label(review.getContent());
-            body.setWrapText(true);
-            body.setStyle("-fx-font-size: 13px;");
-            card.getChildren().add(body);
-        }
-
         return card;
     }
 
@@ -216,12 +208,10 @@ public class PostDetailController {
     private void handleAddReview() {
         reviewError.setText("");
         int rating = ratingCombo.getValue();
-        String content = reviewInput.getText().trim();
 
         try {
-            Review review = new Review(postId, SceneManager.getCurrentUser().getId(), rating, content);
+            Review review = new Review(postId, SceneManager.getCurrentUser().getId(), rating, null);
             reviewService.create(review);
-            reviewInput.clear();
             reviewFormBox.setVisible(false);
             reviewFormBox.setManaged(false);
             loadReviews();

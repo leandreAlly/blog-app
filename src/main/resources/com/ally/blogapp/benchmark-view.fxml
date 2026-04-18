@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.ally.blogapp.controller.BenchmarkController"
+      spacing="15" style="-fx-padding: 25; -fx-background-color: white;">
+
+    <Button text="Back to Posts" onAction="#handleBack"
+            style="-fx-background-color: white; -fx-text-fill: black; -fx-padding: 8 16; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand;"/>
+
+    <Label text="Query Performance Benchmark"
+           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+    <Label text="Compares the old LIKE search vs the new Full-Text Search (FTS) with GIN index."
+           style="-fx-font-size: 13px; -fx-text-fill: #666;"/>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background: white; -fx-background-color: white; -fx-border-color: transparent;">
+        <VBox spacing="20">
+            <padding><Insets right="5"/></padding>
+
+            <!-- Input -->
+            <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;">
+                <Label text="Benchmark Settings" style="-fx-font-size: 15px; -fx-font-weight: bold;"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Search keyword:" style="-fx-font-size: 13px;"/>
+                    <TextField fx:id="keywordField" promptText="e.g. java" prefWidth="200"
+                               style="-fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 3;"/>
+                    <Button fx:id="runBtn" text="Run Benchmark" onAction="#handleRunBenchmark"
+                            style="-fx-background-color: black; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 3; -fx-cursor: hand;"/>
+                </HBox>
+                <Label fx:id="statusLabel" style="-fx-font-size: 12px; -fx-text-fill: #555;"/>
+            </VBox>
+
+            <!-- Results Table -->
+            <VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;">
+                <Label text="Results" style="-fx-font-size: 15px; -fx-font-weight: bold;"/>
+
+                <!-- Header row -->
+                <HBox style="-fx-background-color: #f0f0f0; -fx-padding: 8 12; -fx-background-radius: 4;">
+                    <Label text="Query" prefWidth="180" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+                    <Label text="Avg (ms)" prefWidth="100" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+                    <Label text="Min (ms)" prefWidth="100" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+                    <Label text="Max (ms)" prefWidth="100" style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+                </HBox>
+
+                <!-- LIKE row -->
+                <HBox style="-fx-padding: 8 12; -fx-border-color: #eee; -fx-border-width: 0 0 1 0;">
+                    <Label text="LIKE (before)" prefWidth="180" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="likeAvgLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="likeMinLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="likeMaxLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                </HBox>
+
+                <!-- FTS row -->
+                <HBox style="-fx-padding: 8 12;">
+                    <Label text="FTS (after)" prefWidth="180" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="ftsAvgLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="ftsMinLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                    <Label fx:id="ftsMaxLabel" text="—" prefWidth="100" style="-fx-font-size: 13px;"/>
+                </HBox>
+
+                <Separator/>
+                <Label fx:id="gainLabel" text="" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+            </VBox>
+
+            <!-- EXPLAIN ANALYZE output -->
+            <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;">
+                <Label text="EXPLAIN ANALYZE Output" style="-fx-font-size: 15px; -fx-font-weight: bold;"/>
+                <TextArea fx:id="explainArea" editable="false" prefRowCount="12" wrapText="true"
+                          style="-fx-font-family: monospace; -fx-font-size: 11px; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 3;"/>
+            </VBox>
+
+            <!-- Export -->
+            <HBox>
+                <Button fx:id="exportBtn" text="Export Report to ~/Documents/" onAction="#handleExportReport"
+                        style="-fx-background-color: white; -fx-text-fill: black; -fx-padding: 8 20; -fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand;"/>
+            </HBox>
+
+        </VBox>
+    </ScrollPane>
+</VBox>

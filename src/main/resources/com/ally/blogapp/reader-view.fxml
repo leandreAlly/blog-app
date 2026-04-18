@@ -30,6 +30,12 @@
         <Hyperlink text="Logout" onAction="#handleLogout" style="-fx-text-fill: black; -fx-font-size: 13px;"/>
     </HBox>
 
+    <!-- Tag filter bar -->
+    <ScrollPane hbarPolicy="AS_NEEDED" vbarPolicy="NEVER"
+                style="-fx-background: white; -fx-background-color: white; -fx-border-color: transparent transparent #e0e0e0 transparent; -fx-border-width: 0 0 1 0;">
+        <HBox fx:id="tagFilterBar" spacing="8" style="-fx-padding: 10 40;"/>
+    </ScrollPane>
+
     <!-- Scrollable content -->
     <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
                 style="-fx-background: white; -fx-background-color: white; -fx-border-color: transparent;">

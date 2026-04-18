@@ -78,6 +78,22 @@ public class DashboardController {
     }
 
     @FXML
+    private void showAnalytics() {
+        Parent content = SceneManager.<AnalyticsController>loadFxml("analytics-view.fxml", controller -> {
+            controller.setDashboardController(this);
+        });
+        rootPane.setCenter(content);
+    }
+
+    @FXML
+    private void showPerformance() {
+        Parent content = SceneManager.<BenchmarkController>loadFxml("benchmark-view.fxml", controller -> {
+            controller.setDashboardController(this);
+        });
+        rootPane.setCenter(content);
+    }
+
+    @FXML
     private void handleLogout() {
         SceneManager.setCurrentUser(null);
         SceneManager.switchScene("login-view.fxml", "Login");

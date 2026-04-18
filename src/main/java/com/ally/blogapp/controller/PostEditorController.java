@@ -7,6 +7,7 @@ import com.ally.blogapp.service.PostService;
 import com.ally.blogapp.service.TagService;
 import com.ally.blogapp.util.SceneManager;
 import javafx.fxml.FXML;
+import javafx.geometry.Side;
 import javafx.scene.control.*;
 
 import java.time.LocalDateTime;
@@ -30,10 +31,60 @@ public class PostEditorController {
     private Post currentPost;
     private boolean isNew = true;
 
+    private List<Tag> allTags = List.of();
+    private final ContextMenu tagSuggestions = new ContextMenu();
+
     @FXML
     public void initialize() {
         statusCombo.getItems().addAll("DRAFT", "PUBLISHED", "ARCHIVED");
         statusCombo.setValue("DRAFT");
+
+        allTags = tagService.findAll();
+
+        tagsField.textProperty().addListener((obs, oldVal, newVal) -> showTagSuggestions(newVal));
+        tagsField.focusedProperty().addListener((obs, was, isFocused) -> {
+            if (!isFocused) tagSuggestions.hide();
+        });
+    }
+
+    private void showTagSuggestions(String text) {
+        int lastComma = text.lastIndexOf(',');
+        String token = (lastComma >= 0 ? text.substring(lastComma + 1) : text).trim().toLowerCase();
+
+        if (token.isEmpty()) {
+            tagSuggestions.hide();
+            return;
+        }
+
+        List<Tag> matches = allTags.stream()
+                .filter(t -> t.getName().startsWith(token))
+                .limit(8)
+                .collect(Collectors.toList());
+
+        if (matches.isEmpty()) {
+            tagSuggestions.hide();
+            return;
+        }
+
+        tagSuggestions.getItems().clear();
+        for (Tag tag : matches) {
+            MenuItem item = new MenuItem(tag.getName());
+            item.setOnAction(e -> insertTag(tag.getName()));
+            tagSuggestions.getItems().add(item);
+        }
+
+        if (!tagSuggestions.isShowing()) {
+            tagSuggestions.show(tagsField, Side.BOTTOM, 0, 0);
+        }
+    }
+
+    private void insertTag(String tagName) {
+        String current = tagsField.getText();
+        int lastComma = current.lastIndexOf(',');
+        String prefix = lastComma >= 0 ? current.substring(0, lastComma + 1) + " " : "";
+        tagsField.setText(prefix + tagName + ", ");
+        tagsField.positionCaret(tagsField.getText().length());
+        tagSuggestions.hide();
     }
 
     public void setDashboardController(DashboardController controller) {

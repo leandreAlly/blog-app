@@ -1,6 +1,7 @@
 package com.ally.blogapp.dao;
 
 import com.ally.blogapp.model.Post;
+import com.ally.blogapp.model.PostStats;
 import com.ally.blogapp.model.PostStatus;
 
 import java.util.List;
@@ -13,6 +14,8 @@ public interface PostDao {
     List<Post> findByStatus(PostStatus status);
     List<Post> findAll();
     List<Post> searchByKeyword(String keyword);
+    List<Post> findByTagId(Long tagId);
+    List<PostStats> getStatsByAuthorId(Long authorId);
     Post update(Post post);
     void delete(Long id);
 }

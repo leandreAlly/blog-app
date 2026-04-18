@@ -21,6 +21,7 @@ public class ReaderController {
     @FXML private VBox contentArea;
     @FXML private TextField searchField;
     @FXML private Label userLabel;
+    @FXML private HBox tagFilterBar;
 
     private final PostService postService = new PostService();
     private final UserService userService = new UserService();
@@ -33,7 +34,56 @@ public class ReaderController {
     public void initialize() {
         User user = SceneManager.getCurrentUser();
         userLabel.setText(user.getUsername());
+        buildTagFilterBar();
         showPostList();
+    }
+
+    private void buildTagFilterBar() {
+        tagFilterBar.getChildren().clear();
+
+        Label allBtn = createTagChip("All", true);
+        allBtn.setOnMouseClicked(e -> {
+            resetChipStyles(null);
+            searchField.clear();
+            showPostList();
+        });
+        tagFilterBar.getChildren().add(allBtn);
+
+        List<Tag> tags = tagService.findAll();
+        for (Tag tag : tags) {
+            Label chip = createTagChip(tag.getName(), false);
+            chip.setOnMouseClicked(e -> {
+                resetChipStyles(chip);
+                searchField.clear();
+                displayPostList(postService.findPublishedByTag(tag.getId()));
+            });
+            tagFilterBar.getChildren().add(chip);
+        }
+    }
+
+    private Label createTagChip(String text, boolean active) {
+        Label chip = new Label(text);
+        chip.setStyle(chipStyle(active));
+        chip.setCursor(javafx.scene.Cursor.HAND);
+        return chip;
+    }
+
+    private void resetChipStyles(Label selected) {
+        for (javafx.scene.Node node : tagFilterBar.getChildren()) {
+            if (node instanceof Label chip) {
+                chip.setStyle(chipStyle(chip == selected));
+            }
+        }
+        // "All" chip is always index 0
+        if (selected == null && !tagFilterBar.getChildren().isEmpty()) {
+            ((Label) tagFilterBar.getChildren().get(0)).setStyle(chipStyle(true));
+        }
+    }
+
+    private String chipStyle(boolean active) {
+        return active
+            ? "-fx-font-size: 12px; -fx-background-color: black; -fx-text-fill: white; -fx-padding: 4 12; -fx-background-radius: 12; -fx-cursor: hand;"
+            : "-fx-font-size: 12px; -fx-background-color: #f0f0f0; -fx-text-fill: #555; -fx-padding: 4 12; -fx-background-radius: 12; -fx-cursor: hand;";
     }
 
     @FXML
@@ -50,6 +100,7 @@ public class ReaderController {
     @FXML
     private void handleHome() {
         searchField.clear();
+        resetChipStyles(null);
         showPostList();
     }
 

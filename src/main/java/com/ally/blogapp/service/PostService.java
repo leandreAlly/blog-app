@@ -3,6 +3,7 @@ package com.ally.blogapp.service;
 import com.ally.blogapp.dao.PostDao;
 import com.ally.blogapp.dao.impl.PostDaoImpl;
 import com.ally.blogapp.model.Post;
+import com.ally.blogapp.model.PostStats;
 import com.ally.blogapp.model.PostStatus;
 
 import java.time.LocalDateTime;
@@ -40,6 +41,14 @@ public class PostService {
 
     public List<Post> search(String keyword) {
         return postDao.searchByKeyword(keyword);
+    }
+
+    public List<Post> findPublishedByTag(Long tagId) {
+        return postDao.findByTagId(tagId);
+    }
+
+    public List<PostStats> getStatsByAuthorId(Long authorId) {
+        return postDao.getStatsByAuthorId(authorId);
     }
 
     public Post publish(Long postId) {

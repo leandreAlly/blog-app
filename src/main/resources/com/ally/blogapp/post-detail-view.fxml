@@ -49,16 +49,13 @@
                 <!-- Review Form -->
                 <VBox fx:id="reviewFormBox" spacing="10" style="-fx-padding: 10 0 0 0;">
                     <Separator/>
-                    <Label text="Write a Review" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: black;"/>
+                    <Label text="Rate this post" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: black;"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <Label text="Rating:" style="-fx-font-size: 13px;"/>
                         <ComboBox fx:id="ratingCombo"/>
                     </HBox>
-                    <TextArea fx:id="reviewInput" promptText="Write your review (optional)..."
-                              prefRowCount="2" wrapText="true"
-                              style="-fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 3;"/>
                     <Label fx:id="reviewError" style="-fx-text-fill: black; -fx-font-size: 12px;"/>
-                    <Button text="Submit Review" onAction="#handleAddReview"
+                    <Button text="Submit Rating" onAction="#handleAddReview"
                             style="-fx-background-color: black; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 3; -fx-cursor: hand;"/>
                 </VBox>
             </VBox>

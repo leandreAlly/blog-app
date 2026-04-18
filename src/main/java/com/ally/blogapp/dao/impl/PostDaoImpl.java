@@ -2,6 +2,7 @@ package com.ally.blogapp.dao.impl;
 
 import com.ally.blogapp.dao.PostDao;
 import com.ally.blogapp.model.Post;
+import com.ally.blogapp.model.PostStats;
 import com.ally.blogapp.model.PostStatus;
 import com.ally.blogapp.util.DatabaseConnection;
 
@@ -114,18 +115,37 @@ public class PostDaoImpl implements PostDao {
 
     @Override
     public List<Post> searchByKeyword(String keyword) {
-        String sql = "SELECT * FROM posts WHERE LOWER(title) LIKE ? OR LOWER(content) LIKE ? ORDER BY created_at DESC";
+        String sql = "SELECT * FROM posts WHERE search_vector @@ websearch_to_tsquery('english', ?) ORDER BY created_at DESC";
         List<Post> posts = new ArrayList<>();
         try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
-            String pattern = "%" + keyword.toLowerCase() + "%";
-            stmt.setString(1, pattern);
-            stmt.setString(2, pattern);
+            stmt.setString(1, keyword);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 posts.add(mapRow(rs));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error searching posts", e);
+        }
+        return posts;
+    }
+
+    @Override
+    public List<Post> findByTagId(Long tagId) {
+        String sql = """
+                SELECT p.* FROM posts p
+                JOIN post_tags pt ON p.id = pt.post_id
+                WHERE pt.tag_id = ? AND p.status = 'PUBLISHED'
+                ORDER BY p.created_at DESC
+                """;
+        List<Post> posts = new ArrayList<>();
+        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
+            stmt.setLong(1, tagId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                posts.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding posts by tag", e);
         }
         return posts;
     }
@@ -151,6 +171,43 @@ public class PostDaoImpl implements PostDao {
             throw new RuntimeException("Error updating post", e);
         }
         return null;
+    }
+
+    @Override
+    public List<PostStats> getStatsByAuthorId(Long authorId) {
+        String sql = """
+                SELECT p.id, p.title, p.status, p.created_at, p.published_at,
+                       COUNT(DISTINCT c.id)      AS comment_count,
+                       COUNT(DISTINCT r.id)      AS review_count,
+                       COALESCE(AVG(r.rating), 0) AS avg_rating
+                FROM posts p
+                LEFT JOIN comments c ON c.post_id = p.id
+                LEFT JOIN reviews  r ON r.post_id = p.id
+                WHERE p.author_id = ?
+                GROUP BY p.id, p.title, p.status, p.created_at, p.published_at
+                ORDER BY p.created_at DESC
+                """;
+        List<PostStats> stats = new ArrayList<>();
+        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
+            stmt.setLong(1, authorId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Timestamp publishedAt = rs.getTimestamp("published_at");
+                stats.add(new PostStats(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        PostStatus.valueOf(rs.getString("status")),
+                        rs.getTimestamp("created_at").toLocalDateTime(),
+                        publishedAt != null ? publishedAt.toLocalDateTime() : null,
+                        rs.getInt("comment_count"),
+                        rs.getInt("review_count"),
+                        rs.getDouble("avg_rating")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching post stats", e);
+        }
+        return stats;
     }
 
     @Override
