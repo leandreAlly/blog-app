@@ -4,6 +4,8 @@ import com.ally.blogapp.exception.DuplicateResourceException;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.Tag;
 import com.ally.blogapp.repository.TagRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,18 @@ public class TagService {
 
     public List<Tag> findAll() {
         return tagRepository.findAll();
+    }
+
+    public Page<Tag> findAll(Pageable pageable) {
+        return tagRepository.findAll(pageable);
+    }
+
+    public Page<Tag> search(String name, Pageable pageable) {
+        return tagRepository.findByNameContainingIgnoreCase(name, pageable);
+    }
+
+    public List<Tag> findPopular(Pageable pageable) {
+        return tagRepository.findPopular(pageable);
     }
 
     @Transactional

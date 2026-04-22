@@ -6,6 +6,8 @@ import com.ally.blogapp.model.Post;
 import com.ally.blogapp.model.Review;
 import com.ally.blogapp.model.User;
 import com.ally.blogapp.repository.ReviewRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,18 @@ public class ReviewService {
 
     public double getAverageRating(Long postId) {
         return reviewRepository.getAverageRatingByPostId(postId);
+    }
+
+    public Page<Review> findByPostId(Long postId, Pageable pageable) {
+        return reviewRepository.findByPostId(postId, pageable);
+    }
+
+    public Page<Review> findByUserId(Long userId, Pageable pageable) {
+        return reviewRepository.findByUserId(userId, pageable);
+    }
+
+    public Page<Review> findTopRated(Pageable pageable) {
+        return reviewRepository.findTopRated(pageable);
     }
 
     @Transactional

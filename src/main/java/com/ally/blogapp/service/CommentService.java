@@ -5,6 +5,8 @@ import com.ally.blogapp.model.Comment;
 import com.ally.blogapp.model.Post;
 import com.ally.blogapp.model.User;
 import com.ally.blogapp.repository.CommentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,18 @@ public class CommentService {
 
     public List<Comment> findByUserId(Long userId) {
         return commentRepository.findByUserId(userId);
+    }
+
+    public Page<Comment> findByPostId(Long postId, Pageable pageable) {
+        return commentRepository.findByPostId(postId, pageable);
+    }
+
+    public Page<Comment> findByUserId(Long userId, Pageable pageable) {
+        return commentRepository.findByUserId(userId, pageable);
+    }
+
+    public long countByPostId(Long postId) {
+        return commentRepository.countByPostId(postId);
     }
 
     @Transactional

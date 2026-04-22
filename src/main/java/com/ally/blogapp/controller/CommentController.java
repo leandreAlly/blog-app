@@ -8,11 +8,13 @@ import com.ally.blogapp.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/posts/{postId}/comments")
@@ -26,12 +28,25 @@ public class CommentController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all comments for a post")
-    public ResponseEntity<ApiResponse<List<CommentResponse>>> getByPost(@PathVariable Long postId) {
-        List<CommentResponse> comments = commentService.findByPostId(postId).stream()
-                .map(CommentResponse::from)
-                .toList();
+    @Operation(summary = "Get comments for a post with pagination and sorting")
+    public ResponseEntity<ApiResponse<Page<CommentResponse>>> getByPost(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        Sort.Direction dir = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
+        Page<CommentResponse> comments = commentService.findByPostId(postId, pageable).map(CommentResponse::from);
         return ResponseEntity.ok(ApiResponse.success("Comments retrieved", comments));
+    }
+
+    @GetMapping("/count")
+    @Operation(summary = "Count comments for a post")
+    public ResponseEntity<ApiResponse<Long>> count(@PathVariable Long postId) {
+        return ResponseEntity.ok(ApiResponse.success("Comment count retrieved",
+                commentService.countByPostId(postId)));
     }
 
     @GetMapping("/{id}")
