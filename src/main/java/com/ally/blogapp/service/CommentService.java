@@ -8,11 +8,14 @@ import com.ally.blogapp.repository.CommentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class CommentService {
 
     private final CommentRepository commentRepository;
@@ -27,7 +30,9 @@ public class CommentService {
         this.postService = postService;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public Comment create(Long postId, Long userId, String content) {
         Post post = postService.findById(postId);
         User user = userService.findById(userId);
@@ -59,14 +64,18 @@ public class CommentService {
         return commentRepository.countByPostId(postId);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public Comment update(Long id, String content) {
         Comment comment = findById(id);
         comment.setContent(content);
         return commentRepository.save(comment);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public void delete(Long id) {
         findById(id);
         commentRepository.deleteById(id);

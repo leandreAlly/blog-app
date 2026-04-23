@@ -7,11 +7,14 @@ import com.ally.blogapp.repository.TagRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class TagService {
 
     private final TagRepository tagRepository;
@@ -20,7 +23,9 @@ public class TagService {
         this.tagRepository = tagRepository;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public Tag create(String name) {
         if (tagRepository.existsByName(name)) {
             throw new DuplicateResourceException("Tag already exists: " + name);
@@ -28,7 +33,9 @@ public class TagService {
         return tagRepository.save(new Tag(name));
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public Tag findOrCreate(String name) {
         return tagRepository.findByName(name)
                 .orElseGet(() -> tagRepository.save(new Tag(name)));
@@ -60,7 +67,9 @@ public class TagService {
         return tagRepository.findPopular(pageable);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public void delete(Long id) {
         findById(id);
         tagRepository.deleteById(id);

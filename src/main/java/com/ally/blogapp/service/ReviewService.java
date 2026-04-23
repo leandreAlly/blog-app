@@ -9,11 +9,14 @@ import com.ally.blogapp.repository.ReviewRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -28,7 +31,9 @@ public class ReviewService {
         this.postService = postService;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.REPEATABLE_READ,
+                   rollbackFor = Exception.class)
     public Review create(Long postId, Long userId, int rating, String content) {
         if (reviewRepository.existsByPostIdAndUserId(postId, userId)) {
             throw new DuplicateResourceException("User has already reviewed this post");
@@ -67,7 +72,9 @@ public class ReviewService {
         return reviewRepository.findTopRated(pageable);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public Review update(Long id, int rating, String content) {
         Review review = findById(id);
         review.setRating(rating);
@@ -75,7 +82,9 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public void delete(Long id) {
         findById(id);
         reviewRepository.deleteById(id);

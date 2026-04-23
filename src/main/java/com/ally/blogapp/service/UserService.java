@@ -7,11 +7,14 @@ import com.ally.blogapp.model.Role;
 import com.ally.blogapp.model.User;
 import com.ally.blogapp.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -20,7 +23,9 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.REPEATABLE_READ,
+                   rollbackFor = Exception.class)
     public User register(String username, String email, String password, String role) {
         if (userRepository.existsByUsername(username)) {
             throw new DuplicateResourceException("Username already taken: " + username);
@@ -55,7 +60,9 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public User update(Long id, String bio, String profileImage) {
         User user = findById(id);
         if (bio != null) user.setBio(bio);
@@ -63,7 +70,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.READ_COMMITTED,
+                   rollbackFor = Exception.class)
     public void delete(Long id) {
         findById(id);
         userRepository.deleteById(id);
