@@ -5,7 +5,10 @@ import com.ally.blogapp.exception.InvalidOperationException;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.Role;
 import com.ally.blogapp.model.User;
+import com.ally.blogapp.config.CacheConfig;
 import com.ally.blogapp.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,6 +40,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Cacheable(value = CacheConfig.USERS, key = "#id")
     public User findById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -60,6 +64,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    @CacheEvict(value = CacheConfig.USERS, key = "#id")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -70,6 +75,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @CacheEvict(value = CacheConfig.USERS, key = "#id")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)

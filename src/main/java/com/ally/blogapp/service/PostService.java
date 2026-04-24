@@ -1,8 +1,11 @@
 package com.ally.blogapp.service;
 
+import com.ally.blogapp.config.CacheConfig;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.*;
 import com.ally.blogapp.repository.PostRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @Cacheable(value = CacheConfig.POSTS, key = "#id")
     public Post findById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
@@ -73,6 +77,7 @@ public class PostService {
         return postRepository.getStatsByAuthorId(authorId);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#postId")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -83,6 +88,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#postId")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -92,6 +98,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#id")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -108,6 +115,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#id")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -116,6 +124,7 @@ public class PostService {
         postRepository.deleteById(id);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#postId")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
@@ -126,6 +135,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @CacheEvict(value = CacheConfig.POSTS, key = "#postId")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
                    rollbackFor = Exception.class)
