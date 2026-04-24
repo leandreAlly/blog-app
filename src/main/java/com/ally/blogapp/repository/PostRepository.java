@@ -40,4 +40,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         ORDER BY p.createdAt DESC
         """)
     List<PostStats> getStatsByAuthorId(@Param("authorId") Long authorId);
+
+    @Query(value = """
+        SELECT p.* FROM posts p
+        LEFT JOIN comments c ON c.post_id = p.id AND c.created_at >= NOW() - INTERVAL '7 days'
+        LEFT JOIN reviews  r ON r.post_id = p.id AND r.created_at >= NOW() - INTERVAL '7 days'
+        WHERE p.status = 'PUBLISHED'
+          AND p.published_at >= NOW() - INTERVAL '30 days'
+        GROUP BY p.id
+        ORDER BY (COUNT(DISTINCT c.id) * 2 + COUNT(DISTINCT r.id) * 3) DESC,
+                 p.published_at DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Post> findTrending(@Param("limit") int limit);
 }

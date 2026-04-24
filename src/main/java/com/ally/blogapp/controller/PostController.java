@@ -81,6 +81,16 @@ public class PostController {
                 postService.getStatsByAuthorId(authorId)));
     }
 
+    @GetMapping("/trending")
+    @Operation(summary = "Get trending posts ranked by recent comments and reviews (last 7 days)")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> trending(
+            @RequestParam(defaultValue = "10") int limit) {
+        List<PostResponse> posts = postService.findTrending(limit).stream()
+                .map(PostResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Trending posts retrieved", posts));
+    }
+
     @PostMapping
     @Operation(summary = "Create a new post")
     public ResponseEntity<ApiResponse<PostResponse>> create(@Valid @RequestBody CreatePostRequest req) {

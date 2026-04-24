@@ -77,6 +77,10 @@ public class PostService {
         return postRepository.getStatsByAuthorId(authorId);
     }
 
+    public List<Post> findTrending(int limit) {
+        return postRepository.findTrending(limit);
+    }
+
     @CacheEvict(value = CacheConfig.POSTS, key = "#postId")
     @Transactional(propagation = Propagation.REQUIRED,
                    isolation = Isolation.READ_COMMITTED,
