@@ -16,6 +16,9 @@ A RESTful + GraphQL blogging platform built with **Spring Boot 3.3**, **Spring D
 - [GraphQL API](#graphql-api)
 - [API Documentation (Swagger UI)](#api-documentation-swagger-ui)
 - [AOP: Logging & Performance Monitoring](#aop-logging--performance-monitoring)
+- [Caching](#caching)
+- [Database Indexes](#database-indexes)
+- [Transactions](#transactions)
 - [Running Tests](#running-tests)
 - [Performance Report](#performance-report)
 
@@ -33,7 +36,9 @@ A RESTful + GraphQL blogging platform built with **Spring Boot 3.3**, **Spring D
 | API Docs | Springdoc OpenAPI 2.6 (Swagger UI) |
 | GraphQL | Spring for GraphQL |
 | AOP | Spring AOP (AspectJ) |
-| Testing | JUnit 5, Mockito |
+| Cache | Spring Cache + Caffeine |
+| Migrations | Flyway |
+| Testing | JUnit 5, Mockito, Spring Boot Test |
 
 ---
 
@@ -133,6 +138,7 @@ Base URL: `http://localhost:8080/api`
 | GET | `/posts/{id}` | Get post by ID |
 | GET | `/posts/author/{authorId}` | Get posts by author |
 | GET | `/posts/author/{authorId}/stats` | Author post analytics |
+| GET | `/posts/trending?limit=10` | Trending posts (native query, last 7-day activity) |
 | POST | `/posts` | Create post (DRAFT) |
 | PUT | `/posts/{id}` | Update post |
 | POST | `/posts/{id}/publish` | Publish post |
@@ -145,7 +151,8 @@ Base URL: `http://localhost:8080/api`
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/posts/{postId}/comments` | List comments on post |
+| GET | `/posts/{postId}/comments?page=0&size=10&sort=createdAt&direction=asc` | List comments on post (paginated) |
+| GET | `/posts/{postId}/comments/count` | Total comments on post |
 | POST | `/posts/{postId}/comments` | Add comment |
 | PUT | `/posts/{postId}/comments/{id}` | Update comment |
 | DELETE | `/posts/{postId}/comments/{id}` | Delete comment |
@@ -154,7 +161,9 @@ Base URL: `http://localhost:8080/api`
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/tags` | List all tags |
+| GET | `/tags?page=0&size=20&sort=name&direction=asc` | List tags (paginated) |
+| GET | `/tags/search?q=spring` | Case-insensitive name search |
+| GET | `/tags/popular?limit=10` | Most-used tags (cached) |
 | GET | `/tags/{id}` | Get tag by ID |
 | POST | `/tags` | Create tag |
 | DELETE | `/tags/{id}` | Delete tag |
@@ -163,7 +172,7 @@ Base URL: `http://localhost:8080/api`
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/posts/{postId}/reviews` | List reviews on post |
+| GET | `/posts/{postId}/reviews?page=0&size=10&sort=createdAt&direction=desc` | List reviews on post (paginated) |
 | GET | `/posts/{postId}/reviews/average` | Average rating |
 | POST | `/posts/{postId}/reviews` | Add review (1–5 stars) |
 | PUT | `/posts/{postId}/reviews/{id}` | Update review |
@@ -276,24 +285,76 @@ WARN  SLOW [623ms] com.ally.blogapp.service.PostService.search
 
 ---
 
+## Caching
+
+In-memory cache backed by **Caffeine** (Spring Cache abstraction). Configured in `config/CacheConfig.java`.
+
+| Cache name | Used by | Max size | TTL |
+|---|---|---|---|
+| `posts` | `PostService.findById` | 500 | 5 min |
+| `users` | `UserService.findById` | 500 | 5 min |
+| `tags` | `TagService.findById` / `findByName` | 200 | 30 min |
+| `popularTags` | `TagService.findPopular` | 50 | 10 min |
+| `topAuthors` | (reserved) | 50 | 10 min |
+
+**Eviction policy:**
+- Per-entity caches (`posts`, `users`) evict by id on `update`/`delete`/`publish`/`archive`/`addTag`/`removeTag`
+- `tags` and `popularTags` use `@Caching(evict = {...allEntries = true})` on `create`/`delete` since aggregate ordering changes whenever any tag is added or removed
+
+Statistics are recorded (`Caffeine.recordStats()`) so hit/miss ratios can be inspected via Actuator if `spring-boot-starter-actuator` is added.
+
+---
+
+## Database Indexes
+
+Schema migrations are managed by **Flyway** under `src/main/resources/db/migration/`.
+
+- **`V1__initial_schema.sql`** — base tables and basic indexes (FKs, unique columns, search vector)
+- **`V2__performance_indexes.sql`** — composite/partial indexes targeting paginated query patterns:
+  - `idx_posts_published_feed` — partial `(published_at DESC) WHERE status='PUBLISHED'`
+  - `idx_posts_author_created` — composite `(author_id, created_at DESC)` for author archives
+  - `idx_comments_post_created` — composite `(post_id, created_at)` for paginated comments
+  - `idx_reviews_post_created` — composite `(post_id, created_at DESC)` for paginated reviews
+  - `idx_reviews_top_rated` — composite `(rating DESC, created_at DESC)` for top-rated lookups
+
+---
+
+## Transactions
+
+Every service is annotated `@Transactional(readOnly = true)` at the class level so reads run in a Hibernate read-only transaction (no dirty-checking on flush). Write methods override with explicit settings:
+
+```java
+@Transactional(propagation = Propagation.REQUIRED,
+               isolation = Isolation.READ_COMMITTED,
+               rollbackFor = Exception.class)
+```
+
+**Stricter isolation** (`REPEATABLE_READ`) is used on flows that check uniqueness before insert:
+- `UserService.register` — guards against duplicate-username races
+- `ReviewService.create` — guards against duplicate `(post, user)` review races
+
+`TagService.findOrCreate` uses `Propagation.REQUIRES_NEW` so a tag-collision failure during post creation doesn't poison the parent transaction.
+
+Rollback behavior is verified by `TransactionRollbackTest` (see [Running Tests](#running-tests)).
+
+---
+
 ## Running Tests
 
 ```bash
-./mvnw test -Dspring.profiles.active=test
+./mvnw test
 ```
 
-Unit tests use Mockito to mock repositories. Integration tests use `@SpringBootTest` with a real test database.
+- **Unit tests** (`*ServiceTest`) use Mockito to mock repositories — fast, no DB needed.
+- **Integration tests** (`TransactionRollbackTest`) use `@SpringBootTest` against the `blogapp_test` Postgres database to verify real transactional behavior. Start Postgres and create the test DB before running.
 
 ---
 
 ## Performance Report
 
-| Operation | REST (avg ms) | GraphQL (avg ms) | Notes |
-|---|---|---|---|
-| GET all published posts (10 items) | ~25 | ~30 | GraphQL has small overhead for resolver chain |
-| Full-text search | ~40 | ~45 | PostgreSQL tsvector GIN index used in both |
-| Create post + tags | ~35 | ~38 | Transactional write, similar |
-| Author analytics (aggregate) | ~50 | ~55 | Native JPQL GROUP BY query |
-| Get post with comments + reviews | ~30 | ~28 | GraphQL wins on selective field fetch |
+A detailed methodology and pre/post-optimization comparison lives in **[`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)**. Highlights:
 
-**Conclusion:** REST and GraphQL perform comparably for simple reads. GraphQL provides an advantage when clients need selective field retrieval (avoiding over-fetching). The PostgreSQL full-text search index (`GIN` on `search_vector`) ensures sub-50ms search regardless of transport.
+- **Caching** — repeated reads of a single post/user/tag bypass the database after the first request and serve from Caffeine in microseconds.
+- **Composite indexes** — paginated comment/review listings sorted by `created_at` no longer require a full sort; the index supports the `ORDER BY` directly.
+- **Partial index on published posts** — the public feed query reads only the published-feed index instead of scanning the full posts table.
+- **Native trending query** — leverages the same `(post_id, created_at)` indexes already added for comments and reviews so the activity join stays cheap.

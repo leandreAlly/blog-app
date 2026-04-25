@@ -13,7 +13,9 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Blog Platform API")
-                        .description("RESTful and GraphQL API for the Blogging Platform")
-                        .version("1.0.0"));
+                        .description("RESTful and GraphQL API for the Blogging Platform. "
+                                + "Repository-driven endpoints with pagination, sorting, "
+                                + "Caffeine-backed caching, and tuned transactional boundaries.")
+                        .version("1.1.0"));
     }
 }
