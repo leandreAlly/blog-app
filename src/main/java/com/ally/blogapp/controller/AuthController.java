@@ -35,7 +35,11 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user account")
-    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody CreateUserRequest req) {
+    public ResponseEntity<ApiResponse<UserResponse>> register(
+            @Valid @RequestBody CreateUserRequest req
+        ){
+
+
         UserResponse user = UserResponse.from(
                 userService.register(req.username(), req.email(), req.password(), req.role()));
         return ResponseEntity.status(HttpStatus.CREATED)

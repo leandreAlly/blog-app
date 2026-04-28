@@ -9,6 +9,7 @@ import com.ally.blogapp.config.CacheConfig;
 import com.ally.blogapp.repository.UserRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,9 +22,11 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(propagation = Propagation.REQUIRED,
@@ -36,7 +39,7 @@ public class UserService {
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("Email already registered: " + email);
         }
-        User user = new User(username, email, password, Role.valueOf(role));
+        User user = new User(username, email, passwordEncoder.encode(password), Role.valueOf(role));
         return userRepository.save(user);
     }
 
