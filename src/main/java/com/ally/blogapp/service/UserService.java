@@ -52,7 +52,7 @@ public class UserService {
     public User login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new InvalidOperationException("Invalid username or password"));
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new InvalidOperationException("Invalid username or password");
         }
         return user;
