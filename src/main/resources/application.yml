@@ -27,6 +27,10 @@ springdoc:
 server:
   port: 8080
 
+jwt:
+  secret: kydcrGu6FakeXO3H2NVYtKR6z/f78GDdGSdcCkqomJo=
+  expiration: 86400000
+
 logging:
   level:
     com.ally.blogapp: INFO
