@@ -40,3 +40,4 @@ cors:
 logging:
   level:
     com.ally.blogapp: INFO
+    com.ally.blogapp.security: INFO
