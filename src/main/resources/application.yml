@@ -31,6 +31,12 @@ jwt:
   secret: kydcrGu6FakeXO3H2NVYtKR6z/f78GDdGSdcCkqomJo=
   expiration: 86400000
 
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:4200
+    - http://localhost:8081
+
 logging:
   level:
     com.ally.blogapp: INFO
