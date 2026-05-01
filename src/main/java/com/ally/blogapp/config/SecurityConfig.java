@@ -1,7 +1,9 @@
 package com.ally.blogapp.config;
 
+import com.ally.blogapp.security.CustomOAuth2UserService;
 import com.ally.blogapp.security.CustomUserDetailsService;
 import com.ally.blogapp.security.JwtAuthenticationFilter;
+import com.ally.blogapp.security.OAuth2AuthenticationSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,14 +32,20 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oauth2SuccessHandler;
 
     @Value("${cors.allowed-origins}")
     private List<String> allowedOrigins;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,
-                          JwtAuthenticationFilter jwtAuthenticationFilter) {
+                          JwtAuthenticationFilter jwtAuthenticationFilter,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          OAuth2AuthenticationSuccessHandler oauth2SuccessHandler) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oauth2SuccessHandler = oauth2SuccessHandler;
     }
 
     @Bean
@@ -76,15 +84,23 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
-                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // IF_REQUIRED instead of STATELESS: OAuth2 redirect flow needs a short-lived
+                // session to store the state parameter between the redirect and the callback.
+                // JWT-authenticated requests are still stateless — the filter ignores the session.
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(c -> c
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/api-docs", "/api-docs/**").permitAll()
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(ui -> ui.userService(customOAuth2UserService))
+                        .successHandler(oauth2SuccessHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

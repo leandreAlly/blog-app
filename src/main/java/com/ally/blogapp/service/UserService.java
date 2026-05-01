@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -56,6 +57,20 @@ public class UserService {
             throw new InvalidOperationException("Invalid username or password");
         }
         return user;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,
+                   isolation = Isolation.REPEATABLE_READ,
+                   rollbackFor = Exception.class)
+    public User findOrCreateByOAuth2(String email, String displayName) {
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            String base = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "_");
+            String username = userRepository.existsByUsername(base)
+                    ? base + "_" + UUID.randomUUID().toString().substring(0, 6)
+                    : base;
+            String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+            return userRepository.save(new User(username, email, randomPassword, Role.READER));
+        });
     }
 
     public User findByUsername(String username) {
