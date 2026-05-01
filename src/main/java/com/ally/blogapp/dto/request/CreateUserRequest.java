@@ -24,6 +24,6 @@ public record CreateUserRequest(
         String password,
 
         @NotBlank(message = "Role is required")
-        @Pattern(regexp = "BLOGGER|READER", message = "Role must be BLOGGER or READER")
+        @Pattern(regexp = "ADMIN|AUTHOR|READER", message = "Role must be ADMIN, AUTHOR, or READER")
         String role
 ) {}

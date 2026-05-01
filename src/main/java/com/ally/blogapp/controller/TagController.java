@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -72,6 +73,7 @@ public class TagController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new tag")
     public ResponseEntity<ApiResponse<TagResponse>> create(@Valid @RequestBody CreateTagRequest req) {
         TagResponse tag = TagResponse.from(tagService.create(req.name()));
@@ -80,6 +82,7 @@ public class TagController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a tag")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         tagService.delete(id);

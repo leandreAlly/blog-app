@@ -1,6 +1,7 @@
 package com.ally.blogapp.model;
 
 public enum Role {
-    BLOGGER,
+    ADMIN,
+    AUTHOR,
     READER
 }

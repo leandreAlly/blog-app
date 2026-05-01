@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -92,6 +93,7 @@ public class PostController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Create a new post")
     public ResponseEntity<ApiResponse<PostResponse>> create(@Valid @RequestBody CreatePostRequest req) {
         PostResponse post = PostResponse.from(
@@ -101,6 +103,7 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Update a post")
     public ResponseEntity<ApiResponse<PostResponse>> update(@PathVariable Long id,
                                                             @Valid @RequestBody UpdatePostRequest req) {
@@ -109,6 +112,7 @@ public class PostController {
     }
 
     @PostMapping("/{id}/publish")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Publish a post")
     public ResponseEntity<ApiResponse<PostResponse>> publish(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Post published",
@@ -116,6 +120,7 @@ public class PostController {
     }
 
     @PostMapping("/{id}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Archive a post")
     public ResponseEntity<ApiResponse<PostResponse>> archive(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Post archived",
@@ -123,6 +128,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/tags/{tagId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Add a tag to a post")
     public ResponseEntity<ApiResponse<PostResponse>> addTag(@PathVariable Long postId,
                                                             @PathVariable Long tagId) {
@@ -131,6 +137,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{postId}/tags/{tagId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AUTHOR')")
     @Operation(summary = "Remove a tag from a post")
     public ResponseEntity<ApiResponse<PostResponse>> removeTag(@PathVariable Long postId,
                                                                @PathVariable Long tagId) {
@@ -139,6 +146,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a post")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         postService.delete(id);
