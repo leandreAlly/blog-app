@@ -6,12 +6,14 @@ import com.ally.blogapp.dto.response.ApiResponse;
 import com.ally.blogapp.dto.response.AuthResponse;
 import com.ally.blogapp.dto.response.UserResponse;
 import com.ally.blogapp.security.JwtUtils;
+import com.ally.blogapp.security.TokenBlacklistService;
 import com.ally.blogapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,13 +30,16 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthController(UserService userService,
                           AuthenticationManager authenticationManager,
-                          JwtUtils jwtUtils) {
+                          JwtUtils jwtUtils,
+                          TokenBlacklistService tokenBlacklistService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @PostMapping("/login")
@@ -54,6 +59,19 @@ public class AuthController {
                 jwtUtils.getExpirationMs() / 1000
         );
         return ResponseEntity.ok(ApiResponse.success("Login successful", body));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Invalidate the current JWT token")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (jwtUtils.validateToken(token)) {
+                tokenBlacklistService.blacklist(token, jwtUtils.extractExpiration(token));
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
     }
 
     @PostMapping("/register")

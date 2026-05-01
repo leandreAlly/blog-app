@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 
@@ -53,6 +54,10 @@ public class JwtUtils {
 
     public String extractRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    public Instant extractExpiration(String token) {
+        return getClaims(token).getExpiration().toInstant();
     }
 
     private Claims getClaims(String token) {
