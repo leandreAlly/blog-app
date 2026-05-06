@@ -2,11 +2,13 @@ package com.ally.blogapp.service;
 
 import com.ally.blogapp.config.AsyncConfig;
 import com.ally.blogapp.config.CacheConfig;
+import com.ally.blogapp.event.PostPublishedEvent;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.*;
 import com.ally.blogapp.repository.PostRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -28,11 +30,16 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserService userService;
     private final TagService tagService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public PostService(PostRepository postRepository, UserService userService, TagService tagService) {
+    public PostService(PostRepository postRepository,
+                       UserService userService,
+                       TagService tagService,
+                       ApplicationEventPublisher eventPublisher) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.tagService = tagService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(propagation = Propagation.REQUIRED,
@@ -109,7 +116,10 @@ public class PostService {
         Post post = findById(postId);
         post.setStatus(PostStatus.PUBLISHED);
         post.setPublishedAt(LocalDateTime.now());
-        return postRepository.save(post);
+        Post saved = postRepository.save(post);
+        eventPublisher.publishEvent(
+                new PostPublishedEvent(saved.getId(), saved.getAuthor().getId(), saved.getTitle()));
+        return saved;
     }
 
     @CacheEvict(value = CacheConfig.POSTS, key = "#postId")

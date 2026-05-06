@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ class PostServiceTest {
     @Mock private PostRepository postRepository;
     @Mock private UserService userService;
     @Mock private TagService tagService;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PostService postService;

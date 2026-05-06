@@ -1,11 +1,13 @@
 package com.ally.blogapp.service;
 
+import com.ally.blogapp.event.ReviewCreatedEvent;
 import com.ally.blogapp.exception.DuplicateResourceException;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.Post;
 import com.ally.blogapp.model.Review;
 import com.ally.blogapp.model.User;
 import com.ally.blogapp.repository.ReviewRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,13 +24,16 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserService userService;
     private final PostService postService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ReviewService(ReviewRepository reviewRepository,
                          UserService userService,
-                         PostService postService) {
+                         PostService postService,
+                         ApplicationEventPublisher eventPublisher) {
         this.reviewRepository = reviewRepository;
         this.userService = userService;
         this.postService = postService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(propagation = Propagation.REQUIRED,
@@ -40,7 +45,9 @@ public class ReviewService {
         }
         Post post = postService.findById(postId);
         User user = userService.findById(userId);
-        return reviewRepository.save(new Review(post, user, rating, content));
+        Review saved = reviewRepository.save(new Review(post, user, rating, content));
+        eventPublisher.publishEvent(new ReviewCreatedEvent(postId, saved.getId(), userId, rating));
+        return saved;
     }
 
     public Review findById(Long id) {
