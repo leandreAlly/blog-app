@@ -6,6 +6,7 @@ import com.ally.blogapp.dto.response.ApiResponse;
 import com.ally.blogapp.dto.response.PostResponse;
 import com.ally.blogapp.model.PostStats;
 import com.ally.blogapp.service.PostService;
+import com.ally.blogapp.service.ViewCountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,9 +28,11 @@ import java.util.concurrent.CompletableFuture;
 public class PostController {
 
     private final PostService postService;
+    private final ViewCountService viewCountService;
 
-    public PostController(PostService postService) {
+    public PostController(PostService postService, ViewCountService viewCountService) {
         this.postService = postService;
+        this.viewCountService = viewCountService;
     }
 
     @GetMapping
@@ -63,8 +66,10 @@ public class PostController {
     @GetMapping("/{id}")
     @Operation(summary = "Get post by ID")
     public ResponseEntity<ApiResponse<PostResponse>> getById(@PathVariable Long id) {
+        var post = postService.findById(id);
+        viewCountService.record(id);
         return ResponseEntity.ok(ApiResponse.success("Post retrieved",
-                PostResponse.from(postService.findById(id))));
+                PostResponse.from(post, viewCountService.currentDelta(id))));
     }
 
     @GetMapping("/author/{authorId}")

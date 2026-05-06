@@ -15,9 +15,14 @@ public record PostResponse(
         List<String> tags,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        LocalDateTime publishedAt
+        LocalDateTime publishedAt,
+        long viewCount
 ) {
     public static PostResponse from(Post post) {
+        return from(post, 0L);
+    }
+
+    public static PostResponse from(Post post, long pendingViews) {
         List<String> tagNames = post.getTags().stream()
                 .map(t -> t.getName())
                 .sorted()
@@ -32,7 +37,8 @@ public record PostResponse(
                 tagNames,
                 post.getCreatedAt(),
                 post.getUpdatedAt(),
-                post.getPublishedAt()
+                post.getPublishedAt(),
+                post.getViewCount() + pendingViews
         );
     }
 }

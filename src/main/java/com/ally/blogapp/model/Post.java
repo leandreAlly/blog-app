@@ -43,6 +43,9 @@ public class Post {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "view_count", nullable = false)
+    private long viewCount = 0L;
+
     @ManyToMany
     @JoinTable(
         name = "post_tags",
@@ -89,6 +92,9 @@ public class Post {
 
     public LocalDateTime getPublishedAt() { return publishedAt; }
     public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+
+    public long getViewCount() { return viewCount; }
+    public void setViewCount(long viewCount) { this.viewCount = viewCount; }
 
     public Set<Tag> getTags() { return tags; }
     public void setTags(Set<Tag> tags) { this.tags = tags; }
