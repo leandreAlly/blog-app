@@ -1,5 +1,6 @@
 package com.ally.blogapp.service;
 
+import com.ally.blogapp.config.AsyncConfig;
 import com.ally.blogapp.config.CacheConfig;
 import com.ally.blogapp.exception.ResourceNotFoundException;
 import com.ally.blogapp.model.*;
@@ -8,6 +9,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +82,23 @@ public class PostService {
 
     public List<Post> findTrending(int limit) {
         return postRepository.findTrending(limit);
+    }
+
+    /**
+     * Async variant for the REST endpoint. The aggregation joins posts
+     * with comments and reviews and groups by post — expensive enough that
+     * blocking a Tomcat worker on it limits concurrency. Offloading to
+     * analyticsExecutor lets the request thread return immediately and the
+     * pool absorbs concurrent stat requests up to its bounded queue.
+     */
+    @Async(AsyncConfig.ANALYTICS_EXECUTOR)
+    public CompletableFuture<List<PostStats>> getStatsByAuthorIdAsync(Long authorId) {
+        return CompletableFuture.completedFuture(postRepository.getStatsByAuthorId(authorId));
+    }
+
+    @Async(AsyncConfig.ANALYTICS_EXECUTOR)
+    public CompletableFuture<List<Post>> findTrendingAsync(int limit) {
+        return CompletableFuture.completedFuture(postRepository.findTrending(limit));
     }
 
     @CacheEvict(value = CacheConfig.POSTS, key = "#postId")

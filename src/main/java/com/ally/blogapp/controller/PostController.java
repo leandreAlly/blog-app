@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -76,20 +77,19 @@ public class PostController {
     }
 
     @GetMapping("/author/{authorId}/stats")
-    @Operation(summary = "Get post statistics for an author")
-    public ResponseEntity<ApiResponse<List<PostStats>>> getStats(@PathVariable Long authorId) {
-        return ResponseEntity.ok(ApiResponse.success("Stats retrieved",
-                postService.getStatsByAuthorId(authorId)));
+    @Operation(summary = "Get post statistics for an author (async)")
+    public CompletableFuture<ResponseEntity<ApiResponse<List<PostStats>>>> getStats(@PathVariable Long authorId) {
+        return postService.getStatsByAuthorIdAsync(authorId)
+                .thenApply(stats -> ResponseEntity.ok(ApiResponse.success("Stats retrieved", stats)));
     }
 
     @GetMapping("/trending")
-    @Operation(summary = "Get trending posts ranked by recent comments and reviews (last 7 days)")
-    public ResponseEntity<ApiResponse<List<PostResponse>>> trending(
+    @Operation(summary = "Get trending posts ranked by recent comments and reviews (last 7 days, async)")
+    public CompletableFuture<ResponseEntity<ApiResponse<List<PostResponse>>>> trending(
             @RequestParam(defaultValue = "10") int limit) {
-        List<PostResponse> posts = postService.findTrending(limit).stream()
-                .map(PostResponse::from)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success("Trending posts retrieved", posts));
+        return postService.findTrendingAsync(limit)
+                .thenApply(posts -> posts.stream().map(PostResponse::from).toList())
+                .thenApply(posts -> ResponseEntity.ok(ApiResponse.success("Trending posts retrieved", posts)));
     }
 
     @PostMapping
