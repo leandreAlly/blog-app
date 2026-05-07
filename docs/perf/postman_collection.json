@@ -1,0 +1,89 @@
+{
+  "info": {
+    "name": "Blog App — Optimization Smoke Tests",
+    "description": "Hot endpoints touched by the advanced-optimization phase. Each request asserts 200 and logs response time. Set the `baseUrl` and `jwt` collection variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{jwt}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "jwt", "value": "" },
+    { "key": "postId", "value": "1" },
+    { "key": "authorId", "value": "1" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('status 200', () => pm.response.to.have.status(200));",
+          "console.log(pm.info.requestName + ' ' + pm.response.responseTime + 'ms');"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Posts — list (paginated)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts?page=0&size=10"
+      }
+    },
+    {
+      "name": "Posts — by id (drives view counter)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts/{{postId}}"
+      }
+    },
+    {
+      "name": "Posts — trending (served from in-memory index)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts/trending?limit=10"
+      }
+    },
+    {
+      "name": "Posts — author stats (async, analyticsExecutor)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts/author/{{authorId}}/stats"
+      }
+    },
+    {
+      "name": "Actuator — Prometheus scrape",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/actuator/prometheus"
+      }
+    },
+    {
+      "name": "Actuator — analyticsExecutor active threads",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/actuator/metrics/executor.active?tag=name:analyticsExecutor"
+      }
+    },
+    {
+      "name": "Actuator — Tomcat busy threads",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/actuator/metrics/tomcat.threads.busy"
+      }
+    },
+    {
+      "name": "Actuator — cache stats (posts)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/actuator/metrics/cache.gets?tag=cache:posts"
+      }
+    }
+  ]
+}
