@@ -31,15 +31,18 @@ public class PostService {
     private final UserService userService;
     private final TagService tagService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TrendingIndex trendingIndex;
 
     public PostService(PostRepository postRepository,
                        UserService userService,
                        TagService tagService,
-                       ApplicationEventPublisher eventPublisher) {
+                       ApplicationEventPublisher eventPublisher,
+                       TrendingIndex trendingIndex) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.tagService = tagService;
         this.eventPublisher = eventPublisher;
+        this.trendingIndex = trendingIndex;
     }
 
     @Transactional(propagation = Propagation.REQUIRED,
@@ -88,6 +91,21 @@ public class PostService {
     }
 
     public List<Post> findTrending(int limit) {
+        if (limit <= trendingIndex.capacity()) {
+            List<Long> ids = trendingIndex.topIds(limit);
+            if (!ids.isEmpty()) {
+                List<Post> fetched = postRepository.findAllById(ids);
+                // findAllById ignores ordering — restore the heap-derived rank.
+                java.util.Map<Long, Post> byId = new java.util.HashMap<>(fetched.size() * 2);
+                for (Post p : fetched) byId.put(p.getId(), p);
+                List<Post> ordered = new java.util.ArrayList<>(ids.size());
+                for (Long id : ids) {
+                    Post p = byId.get(id);
+                    if (p != null) ordered.add(p);
+                }
+                return ordered;
+            }
+        }
         return postRepository.findTrending(limit);
     }
 

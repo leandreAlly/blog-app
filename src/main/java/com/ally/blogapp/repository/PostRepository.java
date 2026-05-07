@@ -58,4 +58,24 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying
     @Query("UPDATE Post p SET p.viewCount = p.viewCount + :delta WHERE p.id = :id")
     int addViewCount(@Param("id") Long id, @Param("delta") long delta);
+
+    /**
+     * Raw candidate set for TrendingIndex. Returns per-post engagement counts
+     * for last-30-day published posts so scoring can be done in Java (allowing
+     * the in-memory live view-count delta to participate). Each row is
+     * [postId: Long, comments7d: Long, reviews7d: Long, viewCount: Long].
+     */
+    @Query(value = """
+        SELECT p.id,
+               COUNT(DISTINCT c.id) AS comments,
+               COUNT(DISTINCT r.id) AS reviews,
+               p.view_count
+        FROM posts p
+        LEFT JOIN comments c ON c.post_id = p.id AND c.created_at >= NOW() - INTERVAL '7 days'
+        LEFT JOIN reviews  r ON r.post_id = p.id AND r.created_at >= NOW() - INTERVAL '7 days'
+        WHERE p.status = 'PUBLISHED'
+          AND p.published_at >= NOW() - INTERVAL '30 days'
+        GROUP BY p.id, p.view_count
+        """, nativeQuery = true)
+    List<Object[]> findTrendingCandidates();
 }

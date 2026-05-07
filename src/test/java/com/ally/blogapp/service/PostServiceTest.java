@@ -24,6 +24,7 @@ class PostServiceTest {
     @Mock private UserService userService;
     @Mock private TagService tagService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private TrendingIndex trendingIndex;
 
     @InjectMocks
     private PostService postService;
